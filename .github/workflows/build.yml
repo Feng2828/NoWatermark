@@ -18,11 +18,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # ubuntu-latest 镜像已预装 Android SDK 并设好 ANDROID_HOME，
+      # 直接用镜像自带的 sdkmanager，不再依赖 android-actions/setup-android
+      # （该 action v3 会硬装已下线的 tools 包而失败）。
       - name: Install build tools & platform 35
+        shell: bash
         run: |
+          set -e
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "SDK root: $ANDROID_HOME"
+          # 预接受 SDK 许可（pipe 到 yes 会产生 141，忽略之）
+          set +e +o pipefail
+          yes | sdkmanager --licenses > /dev/null 2>&1
+          set -e -o pipefail
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle

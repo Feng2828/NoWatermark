@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
- 
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,37 +19,42 @@ jobs:
           java-version: '17'
 
       # ubuntu-latest 镜像已预装 Android SDK（ANDROID_HOME=/usr/local/lib/android/sdk）
-      # 且已预装 platforms;android-35 与 build-tools;35.0.0。
-      # 注意：sdkmanager 不在 PATH，位于 cmdline-tools/<版本>/bin/ 下，需动态定位。
-      # 不再使用 android-actions/setup-android@v3（该版本硬装已下线的 tools 包，必失败）。
+      # 且已预装 platforms;android-35 与 build-tools;35.0.0，并且已接受 SDK 许可。
+      # 因此正常路径下完全不需要调用 sdkmanager，更不要 chmod 系统文件（会 Operation not permitted）。
+      # 仅在组件确实缺失时才兜底尝试 sdkmanager，且全程容错、不中断构建。
+      # 不使用 android-actions/setup-android@v3（该版本硬装已下线的 tools 包，必失败）。
       - name: Prepare Android SDK
         shell: bash
         run: |
           set -e
+          echo "ANDROID_HOME=${ANDROID_HOME:-<unset>}"
           if [ -z "${ANDROID_HOME:-}" ]; then
             echo "::error::ANDROID_HOME is not set"
             exit 1
-          fi
-          echo "ANDROID_HOME=$ANDROID_HOME"
-
-          # 动态定位 sdkmanager（兼容 latest 与 16.0 等版本目录）
-          SDKMGR=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager -print -quit 2>/dev/null || true)
-          if [ -z "$SDKMGR" ]; then
-            echo "::warning::sdkmanager not found; relying on preinstalled SDK components"
-          else
-            echo "Using sdkmanager: $SDKMGR"
-            chmod +x "$SDKMGR"
-            # 预接受许可：yes 被 SIGPIPE 中断返回 141 属正常，子 shell 内吞掉所有错误
-            ( set +e +o pipefail; yes | "$SDKMGR" --licenses > /dev/null 2>&1; true )
-            # 确保组件存在（镜像大多已预装，通常秒过）；失败则容错继续
-            "$SDKMGR" "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
-              || echo "::warning::sdkmanager install returned non-zero; continuing with preinstalled components"
           fi
 
           echo "--- platforms ---"
           ls "$ANDROID_HOME/platforms" 2>/dev/null | head -20 || true
           echo "--- build-tools ---"
           ls "$ANDROID_HOME/build-tools" 2>/dev/null | head -20 || true
+
+          # 只在必需组件缺失时才尝试 sdkmanager；已预装则零写操作直接跳过。
+          if [ ! -d "$ANDROID_HOME/platforms/android-35" ] || [ ! -d "$ANDROID_HOME/build-tools/35.0.0" ]; then
+            echo "Required SDK components missing; trying sdkmanager as fallback..."
+            SDKMGR=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager -print -quit 2>/dev/null || true)
+            if [ -z "$SDKMGR" ]; then
+              echo "::warning::sdkmanager not found; build may fail if components are truly missing"
+            else
+              echo "Using sdkmanager: $SDKMGR"
+              # 不 chmod：镜像预装文件属系统所有，chmod 会 Operation not permitted。
+              # 许可接受放子 shell 吞掉 yes 的 141；安装失败仅告警，不中断。
+              ( set +e +o pipefail; yes | "$SDKMGR" --licenses > /dev/null 2>&1; true )
+              "$SDKMGR" "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
+                || echo "::warning::sdkmanager install failed; build may still work with preinstalled components"
+            fi
+          else
+            echo "SDK components already installed; no sdkmanager action needed."
+          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

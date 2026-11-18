@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">本地去水印</string>
+
+    <string name="permission_title">需要文件访问权限</string>
+    <string name="permission_desc">本应用仅在本机读取/处理你指定的文件夹，不会联网、不上传任何图片。Android 11+ 需要在系统设置中开启“允许管理所有文件”。</string>
+    <string name="grant_permission">前往开启</string>
+    <string name="permission_granted">已获得全部文件访问权限</string>
+    <string name="permission_not_granted">尚未获得全部文件访问权限</string>
+
+    <string name="input_folder">图片来源文件夹</string>
+    <string name="output_folder">结果输出文件夹</string>
+    <string name="choose_folder">选择文件夹</string>
+    <string name="folder_not_set">未选择</string>
+    <string name="input_required">请先选择图片来源文件夹</string>
+    <string name="output_required">请先选择结果输出文件夹</string>
+    <string name="same_folder_warning">输出文件夹不能与来源文件夹或其子文件夹相同</string>
+
+    <string name="sensitivity">检测灵敏度</string>
+    <string name="sensitivity_low">保守</string>
+    <string name="sensitivity_high">宽松</string>
+
+    <string name="start_scan">开始扫描</string>
+    <string name="scanning">正在扫描</string>
+    <string name="scan_progress">已扫描 %1$d / %2$d 张</string>
+    <string name="scan_found">发现疑似水印 %1$d 张</string>
+
+    <string name="confirm_title">确认有水印图片</string>
+    <string name="confirm_hint">仅处理你勾选的图片，未勾选的绝不会处理</string>
+    <string name="watermarked_count">共 %1$d 张待确认</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="invert">反选</string>
+    <string name="start_process">开始处理勾选的 %1$d 张</string>
+    <string name="nothing_selected">没有勾选任何图片</string>
+    <string name="no_watermark_found">未发现疑似有水印的图片</string>
+    <string name="shot_date">拍摄：%1$s</string>
+    <string name="unknown_date">日期未知</string>
+
+    <string name="preview_title">图片预览</string>
+    <string name="preview_regions">红框为检测到的水印区域</string>
+
+    <string name="processing">正在去水印</string>
+    <string name="process_progress">已处理 %1$d / %2$d 张</string>
+
+    <string name="pause">暂停</string>
+    <string name="resume">继续</string>
+    <string name="cancel">取消任务</string>
+    <string name="paused">已暂停</string>
+    <string name="cancelled">任务已取消</string>
+
+    <string name="log_title">处理日志</string>
+    <string name="clear_log">清空日志</string>
+    <string name="empty_log">暂无日志</string>
+
+    <string name="folder_picker_title">选择文件夹</string>
+    <string name="picker_up">上级目录</string>
+    <string name="picker_select">选择当前文件夹</string>
+    <string name="picker_path">路径：%1$s</string>
+    <string name="picker_no_subdir">（无子文件夹）</string>
+
+    <string name="done">完成</string>
+    <string name="ok">确定</string>
+    <string name="back">返回</string>
+    <string name="scan_done_title">扫描完成</string>
+    <string name="scan_done_msg">发现 %1$d 张疑似有水印图片，请人工核对。</string>
+    <string name="process_done_title">处理完成</string>
+    <string name="process_done_msg">成功 %1$d 张，失败 %2$d 张。结果保存在：%3$s</string>
+    <string name="notification_channel">后台处理任务</string>
+
+    <string name="log_scan_start">开始扫描：%1$s</string>
+    <string name="log_scan_done">扫描完成，共 %1$d 张图片，疑似有水印 %2$d 张</string>
+    <string name="log_skip_clean">无水印跳过：%1$s</string>
+    <string name="log_detected">检测到水印：%1$s</string>
+    <string name="log_process_ok">已去水印：%1$s</string>
+    <string name="log_process_fail">处理失败：%1$s（%2$s）</string>
+    <string name="log_cancelled">任务已取消</string>
+</resources>

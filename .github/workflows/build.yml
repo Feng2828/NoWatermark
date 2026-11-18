@@ -18,20 +18,38 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ubuntu-latest 镜像已预装 Android SDK 并设好 ANDROID_HOME，
-      # 直接用镜像自带的 sdkmanager，不再依赖 android-actions/setup-android
-      # （该 action v3 会硬装已下线的 tools 包而失败）。
-      - name: Install build tools & platform 35
+      # ubuntu-latest 镜像已预装 Android SDK（ANDROID_HOME=/usr/local/lib/android/sdk）
+      # 且已预装 platforms;android-35 与 build-tools;35.0.0。
+      # 注意：sdkmanager 不在 PATH，位于 cmdline-tools/<版本>/bin/ 下，需动态定位。
+      # 不再使用 android-actions/setup-android@v3（该版本硬装已下线的 tools 包，必失败）。
+      - name: Prepare Android SDK
         shell: bash
         run: |
           set -e
+          if [ -z "${ANDROID_HOME:-}" ]; then
+            echo "::error::ANDROID_HOME is not set"
+            exit 1
+          fi
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "SDK root: $ANDROID_HOME"
-          # 预接受 SDK 许可（pipe 到 yes 会产生 141，忽略之）
-          set +e +o pipefail
-          yes | sdkmanager --licenses > /dev/null 2>&1
-          set -e -o pipefail
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+          # 动态定位 sdkmanager（兼容 latest 与 16.0 等版本目录）
+          SDKMGR=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager -print -quit 2>/dev/null || true)
+          if [ -z "$SDKMGR" ]; then
+            echo "::warning::sdkmanager not found; relying on preinstalled SDK components"
+          else
+            echo "Using sdkmanager: $SDKMGR"
+            chmod +x "$SDKMGR"
+            # 预接受许可：yes 被 SIGPIPE 中断返回 141 属正常，子 shell 内吞掉所有错误
+            ( set +e +o pipefail; yes | "$SDKMGR" --licenses > /dev/null 2>&1; true )
+            # 确保组件存在（镜像大多已预装，通常秒过）；失败则容错继续
+            "$SDKMGR" "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
+              || echo "::warning::sdkmanager install returned non-zero; continuing with preinstalled components"
+          fi
+
+          echo "--- platforms ---"
+          ls "$ANDROID_HOME/platforms" 2>/dev/null | head -20 || true
+          echo "--- build-tools ---"
+          ls "$ANDROID_HOME/build-tools" 2>/dev/null | head -20 || true
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
